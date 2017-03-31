@@ -7,7 +7,7 @@ license-file:        LICENSE
 build-type:          Simple
 cabal-version:       >=1.10
 
-executable systemd-nspawn-runner
+executable nix-nspawn-run
   main-is:             Main.hs
   ghc-options:         -Wall -threaded -O3
   build-depends:       base,
