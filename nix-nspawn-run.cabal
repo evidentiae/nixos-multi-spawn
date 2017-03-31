@@ -1,0 +1,28 @@
+name:                nix-nspawn-run
+version:             0.1.0.0
+author:              Rickard Nilsson
+maintainer:          rickynils@gmail.com
+license:             MIT
+license-file:        LICENSE
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable systemd-nspawn-runner
+  main-is:             Main.hs
+  ghc-options:         -Wall -threaded -O3
+  build-depends:       base,
+                       dataenc,
+                       digest-pure,
+                       bytestring,
+                       directory,
+                       hashids,
+                       filepath,
+                       async,
+                       aeson,
+                       entropy,
+                       process,
+                       tailfile-hinotify,
+                       concurrent-output,
+                       unix,
+                       unordered-containers
+  default-language:    Haskell2010
