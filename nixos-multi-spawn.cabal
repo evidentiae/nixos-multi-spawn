@@ -1,4 +1,4 @@
-name:                nix-nspawn-run
+name:                nixos-multi-spawn
 version:             0.1.0.0
 author:              Rickard Nilsson
 maintainer:          rickynils@gmail.com
@@ -7,7 +7,7 @@ license-file:        LICENSE
 build-type:          Simple
 cabal-version:       >=1.10
 
-executable nix-nspawn-run
+executable nixos-multi-spawn
   main-is:             Main.hs
   ghc-options:         -Wall -threaded -O3
   build-depends:       base,

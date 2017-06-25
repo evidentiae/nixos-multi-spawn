@@ -3,7 +3,7 @@
 , process, stdenv, tailfile-hinotify, unix, unordered-containers
 }:
 mkDerivation {
-  pname = "nix-nspawn-run";
+  pname = "nixos-multi-spawn";
   version = "0.1.0.0";
   src = ./.;
   isLibrary = false;

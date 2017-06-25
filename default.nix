@@ -1,3 +1,3 @@
 { pkgs ? import <nixpkgs> {} }:
 
-pkgs.haskellPackages.callPackage ./nix-nspawn-run.nix {}
+pkgs.haskellPackages.callPackage ./nixos-multi-spawn.nix {}
