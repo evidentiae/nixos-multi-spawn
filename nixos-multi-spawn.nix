@@ -1,6 +1,7 @@
 { mkDerivation, aeson, async, base, bytestring, concurrent-output
 , dataenc, digest-pure, directory, entropy, filepath, hashids
-, process, stdenv, tailfile-hinotify, unix, unordered-containers
+, process, stdenv, systemd, tailfile-hinotify, unix
+, unordered-containers
 }:
 mkDerivation {
   pname = "nixos-multi-spawn";
@@ -10,8 +11,8 @@ mkDerivation {
   isExecutable = true;
   executableHaskellDepends = [
     aeson async base bytestring concurrent-output dataenc digest-pure
-    directory entropy filepath hashids process tailfile-hinotify unix
-    unordered-containers
+    directory entropy filepath hashids process systemd
+    tailfile-hinotify unix unordered-containers
   ];
   license = stdenv.lib.licenses.mit;
 }

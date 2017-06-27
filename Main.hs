@@ -32,6 +32,7 @@ import System.Posix.Files
 import System.Console.Concurrent
 import System.Entropy
 import System.Environment
+import System.Systemd.Daemon
 import qualified Web.Hashids
 import qualified Codec.Binary.Base32 as B32
 import Data.Digest.Pure.CRC32 (crc32)
@@ -77,10 +78,15 @@ main = withConcurrentOutput $ do
   tailers <- mapM (async . tailRelFile runDir) (tailFiles cfg)
   ps <- mapM (runMachine cfg uid runId runDir) (H.keys $ machines cfg)
 
-  -- Wait for termination or at least one machine to stop
   aTerm <- async waitForTermination
   aProc <- async ((mapM (async . waitForProcess) ps) >>= waitAny)
+
+  _ <- notifyReady
+
+  -- Wait for termination or at least one machine to stop
   waitEither_ aTerm aProc
+
+  _ <- notifyStopping
 
   killer <- async (killRemainingProcesses ps)
   waitForAllProcesses killer ps

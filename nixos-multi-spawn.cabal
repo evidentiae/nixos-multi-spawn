@@ -21,6 +21,7 @@ executable nixos-multi-spawn
                        aeson,
                        entropy,
                        process,
+                       systemd,
                        tailfile-hinotify,
                        concurrent-output,
                        unix,
