@@ -50,7 +50,8 @@ instance FromJSON Machine
 
 
 data Config = Config
-  { initBinary :: FilePath
+  { netid :: Maybe String
+  , initBinary :: FilePath
   , machines :: H.HashMap String Machine
   , tailFiles :: [FilePath]
   } deriving (Generic)
@@ -72,7 +73,12 @@ main = withConcurrentOutput $ do
            Left e -> error e
   runDir <- D.makeAbsolute "."
   salt <- getEntropy 8
-  let runId = Web.Hashids.encodeUsingSalt salt (fromIntegral uid)
+  let runId =
+        maybe
+          (Web.Hashids.encodeUsingSalt salt (fromIntegral uid))
+          BC.pack
+          (netid cfg)
+
   setupRunDir runDir
 
   tailers <- mapM (async . tailRelFile runDir) (tailFiles cfg)
