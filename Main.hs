@@ -7,6 +7,7 @@ module Main where
 import Control.Monad
 import Control.Concurrent
 import Control.Concurrent.Async
+import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Data.Aeson
 import Data.Bits
 import Data.Char
@@ -76,16 +77,28 @@ main = withConcurrentOutput $ do
   tailers <- mapM (async . tailRelFile runDir) (tailFiles cfg)
   ps <- mapM (runMachine cfg uid runId runDir) (H.keys $ machines cfg)
 
-  -- Wait for one machine to stop
-  _ <- (mapM (async . waitForProcess) ps) >>= waitAny
+  -- Wait for termination or at least one machine to stop
+  aTerm <- async waitForTermination
+  aProc <- async ((mapM (async . waitForProcess) ps) >>= waitAny)
+  waitEither_ aTerm aProc
 
   killer <- async (killRemainingProcesses ps)
   waitForAllProcesses killer ps
 
   -- Clean up
+  _ <- cancel aTerm
   mapM_ cancel tailers
   fixupDir uid gid (runDir </> "logs")
   fixupDir uid gid (runDir </> "fs")
+
+
+waitForTermination :: IO ()
+waitForTermination = do
+  v <- newEmptyMVar
+  let handler = CatchOnce $ putMVar v ()
+  _ <- installHandler sigINT handler Nothing
+  _ <- installHandler sigTERM handler Nothing
+  takeMVar v
 
 
 killRemainingProcesses :: [ProcessHandle] -> IO ()
