@@ -1,5 +1,5 @@
 { mkDerivation, aeson, async, base, bytestring, concurrent-output
-, dataenc, digest-pure, directory, entropy, filepath, hashids
+, dataenc, digest-pure, directory, entropy, filepath
 , process, stdenv, systemd, tailfile-hinotify, unix
 , unordered-containers
 }:
@@ -11,7 +11,7 @@ mkDerivation {
   isExecutable = true;
   executableHaskellDepends = [
     aeson async base bytestring concurrent-output dataenc digest-pure
-    directory entropy filepath hashids process systemd
+    directory entropy filepath process systemd
     tailfile-hinotify unix unordered-containers
   ];
   license = stdenv.lib.licenses.mit;
