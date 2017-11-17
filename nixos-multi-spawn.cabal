@@ -15,7 +15,6 @@ executable nixos-multi-spawn
                        digest-pure,
                        bytestring,
                        directory,
-                       hashids,
                        filepath,
                        async,
                        aeson,

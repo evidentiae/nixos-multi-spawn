@@ -33,7 +33,6 @@ import System.Console.Concurrent
 import System.Entropy
 import System.Environment
 import System.Systemd.Daemon
-import qualified Web.Hashids
 import qualified Codec.Binary.Base32 as B32
 import Data.Digest.Pure.CRC32 (crc32)
 
@@ -50,8 +49,7 @@ instance FromJSON Machine
 
 
 data Config = Config
-  { netid :: Maybe String
-  , initBinary :: FilePath
+  { initBinary :: FilePath
   , machines :: H.HashMap String Machine
   , tailFiles :: [FilePath]
   } deriving (Generic)
@@ -66,23 +64,18 @@ printLog = outputConcurrent . (++ "\n")
 main :: IO ()
 main = withConcurrentOutput $ do
   (uid,gid) <- checkUid
-  [cfgFile] <- getArgs
+  [cfgFile,zone] <- getArgs
   jsonContents <- B.readFile cfgFile
   cfg <- case eitherDecode jsonContents of
            Right config -> pure config
            Left e -> error e
-  runDir <- D.makeAbsolute "."
-  salt <- getEntropy 8
-  let runId =
-        maybe
-          (Web.Hashids.encodeUsingSalt salt (fromIntegral uid))
-          BC.pack
-          (netid cfg)
 
+  runDir <- D.makeAbsolute "."
+  runId <- getEntropy 8
   setupRunDir runDir
 
   tailers <- mapM (async . tailRelFile runDir) (tailFiles cfg)
-  ps <- mapM (runMachine cfg uid runId runDir) (H.keys $ machines cfg)
+  ps <- mapM (runMachine cfg uid runId runDir zone) (H.keys $ machines cfg)
 
   aTerm <- async waitForTermination
   aProc <- async ((mapM (async . waitForProcess) ps) >>= waitAny)
@@ -194,8 +187,8 @@ makeIdentifier s =
   where octets w32 = map (fromIntegral . shiftR w32) [24,16,8,0]
 
 
-runMachine :: Config -> UserID -> BC.ByteString -> FilePath -> String -> IO ProcessHandle
-runMachine cfg uid runId runDir machine = do
+runMachine :: Config -> UserID -> BC.ByteString -> FilePath -> String -> String -> IO ProcessHandle
+runMachine cfg uid runId runDir zone machine = do
   let root = runDir </> "fs" </> machine
   D.createDirectory root
   D.createDirectory $ root </> "usr"
@@ -212,7 +205,7 @@ runMachine cfg uid runId runDir machine = do
              , "--private-users-chown"
              , "--bind-ro=/nix/store"
              , "--tmpfs=/nix/var"
-             , "--network-zone=" ++ BC.unpack runId
+             , "--network-zone=" ++ zone
              , "--kill-signal=SIGRTMIN+3"
              , initBinary cfg
              , nixosSystem m ++ "/init"
