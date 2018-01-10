@@ -205,6 +205,7 @@ runMachine cfg uid runId runDir zone machine = do
              , "--private-users-chown"
              , "--bind-ro=/nix/store"
              , "--tmpfs=/nix/var"
+             , "--tmpfs=/var"
              , "--network-zone=" ++ zone
              , "--kill-signal=SIGRTMIN+3"
              , initBinary cfg
