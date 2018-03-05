@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
@@ -127,10 +128,10 @@ killRemainingProcesses ps = do
   -- A better way would probably be to KILL the systemd PIDs within the
   -- containers instead of killing systemd-nspawn
   forM_ ps $ \ph ->
-    withProcessHandle ph $ \ph_ -> do
-      case ph_ of
-        ClosedHandle _ -> pure ()
-        OpenHandle pid -> signalProcess sigKILL pid
+    withProcessHandle ph $ \case
+      ClosedHandle _  -> pure ()
+      OpenHandle pid  -> signalProcess sigKILL pid
+      OpenExtHandle{} -> error "Windows not supported"
 
 
 waitForAllProcesses :: Async () -> [ProcessHandle] -> IO ()
