@@ -9,6 +9,7 @@ cabal-version:       >=1.10
 
 executable nixos-multi-spawn
   main-is:             Main.hs
+  extra-modules:       System.IO.TailFile
   ghc-options:         -Wall -threaded -O3
   build-depends:       base,
                        dataenc,
@@ -16,12 +17,12 @@ executable nixos-multi-spawn
                        bytestring,
                        directory,
                        filepath,
+                       hinotify,
                        async,
                        aeson,
                        entropy,
                        process,
                        systemd,
-                       tailfile-hinotify,
                        concurrent-output,
                        unix,
                        unordered-containers
