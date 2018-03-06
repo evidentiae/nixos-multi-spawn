@@ -9,7 +9,7 @@ cabal-version:       >=1.10
 
 executable nixos-multi-spawn
   main-is:             Main.hs
-  extra-modules:       System.IO.TailFile
+  other-modules:       System.IO.TailFile
   ghc-options:         -Wall -threaded -O3
   build-depends:       base,
                        dataenc,
