@@ -228,6 +228,9 @@ runMachine cfg uid runId runDir zone machine = do
             , new_session = False
             , child_group = Nothing
             , child_user = Nothing
+#if MIN_VERSION_process(1,5,0)
+            , use_process_jobs = False
+#endif
             }
   (_, _, _, ph) <- createProcess p
   pure ph
