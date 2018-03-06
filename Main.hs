@@ -1,7 +1,8 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
@@ -131,8 +132,9 @@ killRemainingProcesses ps = do
     withProcessHandle ph $ \case
       ClosedHandle _  -> pure ()
       OpenHandle pid  -> signalProcess sigKILL pid
+#if MIN_VERSION_process(1,5,0)
       OpenExtHandle{} -> error "Windows not supported"
-
+#endif
 
 waitForAllProcesses :: Async () -> [ProcessHandle] -> IO ()
 waitForAllProcesses killer ps = do
