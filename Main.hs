@@ -29,6 +29,7 @@ import System.IO
 import System.IO.TailFile
 import System.Posix.Signals
 import System.Posix.User
+import System.Posix.Types
 import System.Posix.Files
 import System.Console.Concurrent
 import System.Entropy
