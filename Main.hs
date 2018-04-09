@@ -54,6 +54,7 @@ data Config = Config
   { initBinary :: FilePath
   , machines :: H.HashMap String Machine
   , tailFiles :: [FilePath]
+  , zone :: String
   } deriving (Generic)
 
 instance FromJSON Config
@@ -66,7 +67,7 @@ printLog = outputConcurrent . (++ "\n")
 main :: IO ()
 main = withConcurrentOutput $ do
   (uid,gid) <- checkUid
-  [cfgFile,zone] <- getArgs
+  [cfgFile] <- getArgs
   jsonContents <- B.readFile cfgFile
   cfg <- case eitherDecode jsonContents of
            Right config -> pure config
@@ -77,7 +78,7 @@ main = withConcurrentOutput $ do
   setupRunDir runDir
 
   tailers <- mapM (async . tailRelFile runDir) (tailFiles cfg)
-  ps <- mapM (runMachine cfg uid runId runDir zone) (H.keys $ machines cfg)
+  ps <- mapM (runMachine cfg uid runId runDir (zone cfg)) (H.keys $ machines cfg)
 
   aTerm <- async waitForTermination
   aProc <- async ((mapM (async . waitForProcess) ps) >>= waitAny)
