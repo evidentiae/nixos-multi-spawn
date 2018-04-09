@@ -192,7 +192,7 @@ makeIdentifier s =
 
 
 runMachine :: Config -> UserID -> BC.ByteString -> FilePath -> String -> String -> IO ProcessHandle
-runMachine cfg uid runId runDir zone machine = do
+runMachine cfg uid runId runDir zoneId machine = do
   let root = runDir </> "fs" </> machine
   D.createDirectory root
   D.createDirectory $ root </> "usr"
@@ -210,7 +210,7 @@ runMachine cfg uid runId runDir zone machine = do
              , "--bind-ro=/nix/store"
              , "--tmpfs=/nix/var"
              , "--tmpfs=/var"
-             , "--network-zone=" ++ zone
+             , "--network-zone=" ++ zoneId
              , "--kill-signal=SIGRTMIN+3"
              , initBinary cfg
              , nixosSystem m ++ "/init"
