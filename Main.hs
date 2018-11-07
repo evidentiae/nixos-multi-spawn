@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Main where
 
@@ -35,11 +36,16 @@ import System.Console.Concurrent
 import System.Entropy
 import System.Environment
 import System.Systemd.Daemon
+import Text.Read
 import qualified Codec.Binary.Base32 as B32
 import Data.Digest.Pure.CRC32 (crc32)
 
 systemdNspawnPath :: FilePath
 systemdNspawnPath = "/run/current-system/sw/sbin/systemd-nspawn"
+
+data SystemdNspawnFeatures = SystemdNspawnFeatures
+  { rlimit :: Bool
+  }
 
 data Machine = Machine
   { nixosSystem :: FilePath
@@ -73,12 +79,14 @@ main = withConcurrentOutput $ do
            Right config -> pure config
            Left e -> error e
 
+  features <- getSystemdNspawnFeatures
+
   runDir <- D.makeAbsolute "."
   runId <- getEntropy 8
   setupRunDir runDir
 
   tailers <- mapM (async . tailRelFile runDir) (tailFiles cfg)
-  ps <- mapM (runMachine cfg uid runId runDir (zone cfg)) (H.keys $ machines cfg)
+  ps <- mapM (runMachine features cfg uid runId runDir (zone cfg)) (H.keys $ machines cfg)
 
   aTerm <- async waitForTermination
   aProc <- async ((mapM (async . waitForProcess) ps) >>= waitAny)
@@ -191,8 +199,8 @@ makeIdentifier s =
   where octets w32 = map (fromIntegral . shiftR w32) [24,16,8,0]
 
 
-runMachine :: Config -> UserID -> BC.ByteString -> FilePath -> String -> String -> IO ProcessHandle
-runMachine cfg uid runId runDir zoneId machine = do
+runMachine :: SystemdNspawnFeatures -> Config -> UserID -> BC.ByteString -> FilePath -> String -> String -> IO ProcessHandle
+runMachine SystemdNspawnFeatures{rlimit} cfg uid runId runDir zoneId machine = do
   let root = runDir </> "fs" </> machine
   D.createDirectory root
   D.createDirectory $ root </> "usr"
@@ -203,6 +211,7 @@ runMachine cfg uid runId runDir zoneId machine = do
   env' <- mapM (\k -> (k,) <$> getEnv k) (concat $ inheritEnvVars m)
   let mkEnv (k,v) = "--setenv="++k++"="++v
       args = concatMap (map mkEnv . (++) env' . H.toList) (environment m) ++
+             (optional rlimit "--rlimit=RLIMIT_NOFILE=infinity") ++
              [ "-D", root
              , "-M", makeIdentifier (runId `BC.append` BC.pack machine)
              , if uid == 0 then "-U" else "--private-users="++show uid
@@ -247,3 +256,17 @@ tailRelFile runDir path = tailFile (runDir </> path) handler (pure "")
           ls = BC.lines $ BC.concat [prev,f]
       mapM_ (printLog . BC.unpack) ls
       pure l
+
+
+getSystemdNspawnFeatures :: IO SystemdNspawnFeatures
+getSystemdNspawnFeatures = do
+  systemdVersionStr <- readProcess systemdNspawnPath ["--version"] ""
+  case words systemdVersionStr of
+    _:v:_ | isJust (readMaybe v :: Maybe Int) -> do
+      let version = read v :: Int
+      return $ SystemdNspawnFeatures { rlimit = version >= 239 }
+    _ -> error "Unknown systemd version"
+
+optional :: Bool -> a -> [a]
+optional False _ = []
+optional True x = [x]
